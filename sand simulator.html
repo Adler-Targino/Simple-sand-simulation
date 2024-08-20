@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const ctx = canvas.getContext('2d');
+
+        const colors = ["Gold", "Yellow", "Orange"]
+        const sandw = 10;
+        const sandh = 10;
+
+        const sand = [];
+        let grid = [];
+
+        let mouseDown = false;
+        let toogleMode = true;
+
+        function instantiateSand(x, y) {
+            try {
+                if (mouseDown) {
+                    const rect = canvas.getBoundingClientRect();
+                    sand.push({
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        x: Math.floor(x / sandw) * sandw,
+                        y: Math.floor(y / sandh) * sandh
+                    });
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function initializeGrid() {
+            const cols = Math.floor(canvas.width / sandw);
+            const rows = Math.floor(canvas.height / sandh);
+            var arr = [];
+            for (var i = 0; i < cols; i++) {
+                arr[i] = [];
+                for (var j = 0; j < rows; j++) {
+                    arr[i][j] = 0;
+                }
+            }
+            return arr;
+        }
+
+        function removeFromGrid(x, y) {
+            const gridX = Math.floor(x / sandw);
+            const gridY = Math.floor(y / sandh);
+            grid[gridX][gridY] = 0;
+        }
+
+        function addToGrid(x, y) {
+            const gridX = Math.floor(x / sandw);
+            const gridY = Math.floor(y / sandh);
+            grid[gridX][gridY] = 1;
+        }
+
+        function handlePhysics(obj) {
+            try {
+                removeFromGrid(obj.x, obj.y);
+                const gridX = Math.floor(obj.x / sandw);
+                const gridY = Math.floor(obj.y / sandh);
+
+                if (obj.y < canvas.height - sandh)
+                {
+                    if (grid[gridX][gridY + 1] == 0)
+                    {
+                        obj.y += sandh;
+                    }
+                    else if (grid[gridX + 1][gridY + 1] == 0 || grid[gridX - 1][gridY + 1] == 0)
+                    {
+                        let rand = Math.floor(Math.random() * 2);
+
+                        if (rand == 0) {
+                            if (grid[gridX - 1][gridY + 1] == 0) {
+                                obj.x -= sandw;
+                                obj.y += sandh;
+                            } else {
+                                obj.x += sandw;
+                                obj.y += sandh;
+                            }
+                        } else {
+                            if (grid[gridX + 1][gridY + 1] == 0) {
+                                obj.x += sandw;
+                                obj.y += sandh;
+                            } else {
+                                obj.x -= sandw;
+                                obj.y += sandh;
+                            }
+                        }
+                    }
+                }
+                addToGrid(obj.x, obj.y);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            sand.forEach(handlePhysics);
+
+            for (let i = 0; i < sand.length; i++) {
+                ctx.fillStyle = sand[i].color;
+                ctx.fillRect(sand[i].x, sand[i].y, sandw, sandh);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('mousedown', function (event) {
+            if (toogleMode) {
+                mouseDown = !mouseDown;
+            } else {
+                mouseDown = true;
+            }
+        });
+        canvas.addEventListener('mouseup', function (event) {
+            if (!toogleMode) {
+                mouseDown = false;
+            }
+        });
+        canvas.addEventListener('mousemove', function (event) {
+            const rect = canvas.getBoundingClientRect();
+            instantiateSand(event.clientX - rect.left, event.clientY - rect.top);
+        });
+
+        grid = initializeGrid();
+        animate();
+    </script>
+</body>
+
+</html>
